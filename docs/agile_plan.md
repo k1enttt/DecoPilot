@@ -4,10 +4,9 @@ Mỗi sprint có checklist rõ ràng, dễ theo dõi và cập nhật trạng th
 
 
 ## Sprint 0: Chuẩn bị & Khởi tạo
-**Checklist:**
-- [ ] Tạo repo, thiết lập cấu trúc thư mục chuẩn (docs/, src/, scripts/, db/, tests/)
-- [ ] Viết README, tài liệu định hướng dự án
-- [ ] Định nghĩa schema đầu vào/ra (RoomInput, SuggestionOutput, Zod schemas)
+- [x] Tạo repo, thiết lập cấu trúc thư mục chuẩn (docs/, src/, scripts/, db/, tests/)
+- [x] Viết README, tài liệu định hướng dự án
+- [x] Định nghĩa schema đầu vào/ra (RoomInput, SuggestionOutput, Zod schemas)
 - [ ] Thiết lập SQLite DB, Chroma vector DB, Docker compose cơ bản
 - [ ] Lên backlog, phân task cho các sprint tiếp theo
 
