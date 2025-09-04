@@ -13,7 +13,7 @@ Mục tiêu chức năng cốt lõi phiên bản đầu: nhập mô tả phòng 
 Sơ đồ: UI (deferred) → API (Express nhẹ) → Mastra Agent (LLM + Retriever + Vector DB) → JSON gợi ý.
 ```
 [User Web UI]* <-> [Backend API (Express)] <-> [Mastra Agent]
-                                         |--> LLM (gpt-oss-20b - Ollama)
+                                         |--> LLM (gpt-oss-20b - VLLM)
                                          |--> Embedding (bge-m3 - Ollama)
                                          |--> Vector DB (Chroma)
                                          |--> MongoDB (users, rooms, suggestions)
@@ -51,8 +51,9 @@ Thứ tự đọc tài liệu khuyến nghị và lối tắt cho từng vai tr�
 |2|`docs/minimal_inputs.md`|Input tối thiểu & fallback|Thiết kế form / validation|
 |3|`docs/ai_interior_agent_technical_spec_v_1.md`|Kiến trúc + API + workflow|Implement backend/agent|
 |4|`docs/project_structure_mvp.md`|Cấu trúc thư mục & module|Setup / refactor|
-|5|`docs/checklist_mvp.md`|Tiến độ & việc còn thiếu|Theo dõi / planning|
-|6|`docs/future_features.md`|Future / Deferred features (canonical)|Tham khảo khi lập kế hoạch mở rộng|
+|5|`docs/mvp_development_plan.md`|Kế hoạch triển khai chi tiết (source-of-truth)|Kickoff / theo dõi tiến độ|
+|6|`docs/checklist_mvp.md`|Tiến độ & việc còn thiếu|Theo dõi / planning|
+|7|`docs/future_features.md`|Future / Deferred features (canonical)|Tham khảo khi lập kế hoạch mở rộng|
 
 Quick Paths:
 - PM: 1 → 5
@@ -113,7 +114,7 @@ Không vượt quá ngân sách. Nếu thiếu dữ liệu → giả định an 
 ### 8.1 Điều kiện
 - Node.js ≥ 20
 - Đã cài `pnpm` / `npm`
-- Ollama đã pull model: `gpt-oss-20b`, `bge-m3`
+- Ollama đã pull model:  `bge-m3`
 - Chạy Chroma server (hoặc dùng embedded mode tạm)
 - MongoDB đang chạy (local hoặc container)
 

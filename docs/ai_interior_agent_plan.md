@@ -16,6 +16,7 @@
   - Input: Text (mô tả phòng, phong cách, ngân sách) – xem `minimal_inputs.md` cho bộ tối thiểu layout.
   - Output: Tư vấn phong cách, màu sắc, bố trí nội thất, có trích dẫn nguồn từ tài liệu chuyên ngành.
   - Agent sử dụng RAG (Mastra + LLM local gpt-oss-20b + embedding bge-m3 + Chroma) để truy xuất tài liệu chuyên ngành.
+    - Agent sử dụng RAG (Mastra + LLM gpt-oss-20b triển khai qua VLLM + embedding bge-m3 + Chroma) để truy xuất tài liệu chuyên ngành.
 
 ### 2.2 Giai đoạn mở rộng
   - Các tính năng mở rộng (vision, image generation, product catalog, personalization, v.v.) được tóm tắt và quản lý trong `docs/future_features.md`. Vui lòng tham khảo file đó để biết chi tiết và lộ trình mở rộng.
@@ -48,7 +49,7 @@
 - **Frontend**: (Sẽ bổ sung sau) – giai đoạn này ưu tiên backend + agent; dự kiến Next.js/Tailwind.
 - **Backend**: Node.js (Express hoặc HTTP nhẹ) + TypeScript.
 - **Agentic RAG**: Mastra (framework chính cho agent, tool, workflow).
-- **LLM**: gpt-oss-20b (local qua Ollama).
+- **LLM**: gpt-oss-20b (triển khai qua VLLM).
 - **Embedding Model**: bge-m3 (Ollama).
 - **Vector DB**: Chroma (self-host).
  - **Vision / Image Generation / Other deferred features**: chi tiết các mở rộng được tập trung trong `docs/future_features.md` (không lặp ở tài liệu này).
@@ -58,13 +59,18 @@
 
 ### Pipeline nạp tài liệu chuyên ngành
 
+
+  - Framework: Mastra (agents + tools + workflows; không dùng fallback LangChain trong MVP).
+
+### Pipeline nạp tài liệu chuyên ngành
+
 - Tài liệu (PDF, markdown, web, v.v.) được chuyển đổi thành vector thông qua Embedding Model bge-m3 (Ollama).
 - Vector lưu vào Document Store/Vector DB Chroma.
 - Agent sử dụng Retriever để tìm kiếm các đoạn tài liệu liên quan khi có truy vấn từ user.
 
 - **AI Agent Engine**:  
   - Framework: Mastra (agents + tools + workflows; không dùng fallback LangChain trong MVP).
-  - LLM: gpt-oss-20b (local qua Ollama API).
+  - LLM: gpt-oss-20b (triển khai qua VLLM).
   - Embedding Model: bge-m3 (Ollama).
   - Document Store/Vector DB: Chroma.
   - Vision / Image Generation / Other deferred features: xem `docs/future_features.md`.
@@ -74,9 +80,11 @@
   - MongoDB (lưu gợi ý, người dùng, lịch sử chat).
   - Vector DB: Chroma để lưu embedding (cá nhân hóa).
 
-- **Hosting/DevOps**:  
+
+**Hosting/DevOps**:  
   - Docker, Docker Swarm hoặc Kubernetes.
   - Hosting: Tự host (on-premise hoặc server riêng).
+  - Docker hóa VLLM, backend, Chroma, MongoDB.
 
 ---
 
@@ -121,12 +129,14 @@ Các tính năng mở rộng (ví dụ: vision, image generation, recommendation
 ---
 
 ## Mastra Adoption (MVP)
+
 | Thành phần | Trạng thái | Ghi chú |
 |------------|-----------|--------|
 | Agent (`interiorAgent`) | Planned | Sẽ thay thế `weatherAgent` (deprecated) |
 | Workflow (`suggestionWorkflow`) | Planned | Orchestrates fetch→retrieve→layout/palette→persist |
 | Tools | Planned | room.fetch, vector.search, layout.plan, palette.generate, suggestion.save |
 | Ingest Script | Planned | `scripts/ingest-docs.ts` chunk 800/80 |
+| LLM | Planned | gpt-oss-20b (triển khai qua VLLM) |
 | Confidence | Planned | Tính theo độ đủ minimal inputs |
 
 Minimal inputs cho layout: xem `minimal_inputs.md`.

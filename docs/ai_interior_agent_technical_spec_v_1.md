@@ -12,7 +12,7 @@
 - Frontend: (Chưa ưu tiên – sẽ bổ sung web client đơn giản sau)
 - Backend: Node.js (Express + TypeScript + Zod)
 - Agentic RAG: Mastra (framework chính; không dùng fallback LangChain trong MVP)
-- LLM: gpt-oss-20b (local qua Ollama API)
+- LLM: gpt-oss-20b (local qua VLLM)
 - Embedding: bge-m3 (Ollama)
 - Vector DB: Chroma (tự host)
 - Database: MongoDB (users, rooms, suggestions)
