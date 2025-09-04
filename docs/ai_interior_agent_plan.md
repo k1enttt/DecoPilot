@@ -31,29 +31,27 @@
 ## 3. Kiến trúc hệ thống
 
 ```
-[Frontend UI]  <->  [Backend API]  <->  [Agentic RAG Engine]
-                                         |--> [LLM Model: gpt-oss-20b local]
-                                         |--> [Embedding Model: bge-m3 từ Ollama]
-                                         |--> [Document Store / Vector DB: Chroma (tự host)]
-                                         |--> [Retriever] (tìm kiếm tài liệu liên quan từ Vector DB)
-                                         |--> [Database] (user, lịch sử chat)
+[Frontend UI]  <->  [Agentic RAG Engine]
+                 |--> [LLM Model: gpt-oss-20b local]
+                 |--> [Embedding Model: bge-m3 từ Ollama]
+                 |--> [Document Store / Vector DB: Chroma (tự host)]
+                 |--> [Retriever] (tìm kiếm tài liệu liên quan từ Vector DB)
+                 |--> Lưu dữ liệu trực tiếp ở local bằng SQLite (file .db)
 ```
 
-**Lưu ý:** Agent sẽ sử dụng RAG để truy xuất thông tin từ tài liệu chuyên ngành, kết hợp LLM để sinh câu trả lời chính xác, có dẫn nguồn. Framework đề xuất: Mastra, LLM (gpt-oss-20b hoặc tương đương), Vector DB (Weaviate/Pinecone/Qdrant).
+**Lưu ý:** Agent sẽ sử dụng RAG để truy xuất thông tin từ tài liệu chuyên ngành, kết hợp LLM để sinh câu trả lời chính xác, có dẫn nguồn. Framework đề xuất: Mastra, LLM (gpt-oss-20b hoặc tương đương), Vector DB (Weaviate/Pinecone/Qdrant). Dữ liệu phòng, gợi ý, lịch sử chat được lưu trực tiếp ở local, không qua API/backend server.
 
 ---
 
+
 ## 4. Công nghệ đề xuất
 
-
-- **Frontend**: (Sẽ bổ sung sau) – giai đoạn này ưu tiên backend + agent; dự kiến Next.js/Tailwind.
-- **Backend**: Node.js (Express hoặc HTTP nhẹ) + TypeScript.
+- **Frontend**: (Sẽ bổ sung sau) – giai đoạn này ưu tiên agent; dự kiến Next.js/Tailwind.
 - **Agentic RAG**: Mastra (framework chính cho agent, tool, workflow).
 - **LLM**: gpt-oss-20b (triển khai qua VLLM).
 - **Embedding Model**: bge-m3 (Ollama).
 - **Vector DB**: Chroma (self-host).
- - **Vision / Image Generation / Other deferred features**: chi tiết các mở rộng được tập trung trong `docs/future_features.md` (không lặp ở tài liệu này).
-- **Database**: MongoDB (user, rooms, suggestions).
+- **Lưu trữ dữ liệu**: Lưu trực tiếp ở local bằng SQLite (file .db), không dùng MongoDB hay backend server.
 - **DevOps**: Docker, GitHub Actions.
 - **Hosting**: Tự host (on-premise hoặc server riêng).
 
@@ -77,7 +75,8 @@
   - Pipeline: Retrieval-Augmented Generation (RAG) — tích hợp module truy xuất tài liệu chuyên ngành (Chroma, embedding bge-m3, search) để tăng độ chính xác và căn cứ cho tư vấn.
 
 - **Database**:  
-  - MongoDB (lưu gợi ý, người dùng, lịch sử chat).
+
+  - Dữ liệu phòng, gợi ý, lịch sử chat được lưu trực tiếp ở local bằng SQLite (file .db).
   - Vector DB: Chroma để lưu embedding (cá nhân hóa).
 
 
@@ -100,23 +99,25 @@
   - Quản lý, truy xuất và cập nhật tài liệu chuyên ngành cho agent.
   - Tích hợp với Chroma, embedding bge-m3, search để phục vụ quy trình Agentic RAG.
 
-4. **Database Module**
-  - Lưu hồ sơ người dùng, lịch sử chat bằng MongoDB.
+
+4. **Lưu trữ dữ liệu**
+  - Lưu hồ sơ người dùng, lịch sử chat trực tiếp ở local bằng SQLite (file .db).
 
 Các tính năng mở rộng (ví dụ: vision, image generation, recommendation TMĐT, personalization) được tách ra và mô tả đầy đủ trong `docs/future_features.md`.
 
 ---
 
 ## 6. Lộ trình phát triển
+
 ### Sprint 1 (2-3 tuần)
-- Thiết lập dự án (repo, CI/CD, kiến trúc Mastra).  
-- Tạo Mastra agent `interiorAgent`, tools & workflow `suggestionWorkflow`.  
-- Tích hợp LLM & embedding + Chroma + MongoDB.  
+- Thiết lập dự án (repo, CI/CD, kiến trúc Mastra).
+- Tạo Mastra agent `interiorAgent`, tools & workflow `suggestionWorkflow`.
+- Tích hợp LLM & embedding + Chroma. Dữ liệu phòng/gợi ý/lịch sử lưu trực tiếp ở local.
 
 ### Sprint 2 (2-3 tuần)
-- Gợi ý phong cách + màu sắc + bố trí (tối ưu prompt + confidence).  
-- Lưu dữ liệu người dùng vào DB + ingestion tài liệu domain.  
-- (Chuẩn bị) thiết kế UI web.  
+- Gợi ý phong cách + màu sắc + bố trí (tối ưu prompt + confidence).
+- Lưu dữ liệu người dùng vào local + ingestion tài liệu domain.
+- (Chuẩn bị) thiết kế UI web.
 
 ### Sprint 3 (3-4 tuần)
 - UI/UX refinement and placeholder visualization tasks; detailed work on visualization, image generation and product-catalog/pricing are deferred and documented in `docs/future_features.md`.
@@ -138,6 +139,7 @@ Các tính năng mở rộng (ví dụ: vision, image generation, recommendation
 | Ingest Script | Planned | `scripts/ingest-docs.ts` chunk 800/80 |
 | LLM | Planned | gpt-oss-20b (triển khai qua VLLM) |
 | Confidence | Planned | Tính theo độ đủ minimal inputs |
+| Lưu trữ dữ liệu | Planned | Lưu trực tiếp ở local bằng SQLite (file .db) |
 
 Minimal inputs cho layout: xem `minimal_inputs.md`.
 
@@ -147,9 +149,8 @@ Minimal inputs cho layout: xem `minimal_inputs.md`.
 - **MVP thành công** khi:  
   - Người dùng nhập thông tin căn phòng và nhận được gợi ý thiết kế có giá trị thực tế.  
   - UI thân thiện, phản hồi nhanh (<5s).  
+  - Agent hoạt động độc lập, lưu dữ liệu trực tiếp ở local bằng SQLite, không phụ thuộc backend server/API.  
 - **Thành công mở rộng** khi:  
-  - AI Agent có thể phân tích hình ảnh + gợi ý chính xác hơn.  
- - **Thành công mở rộng** khi:  
   - AI Agent có thể phân tích hình ảnh + gợi ý chính xác hơn.  
   - Các mục mở rộng (ví dụ: sinh ảnh minh họa, tích hợp sản phẩm thương mại) được mô tả trong `docs/future_features.md`.
 

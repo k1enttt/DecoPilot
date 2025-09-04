@@ -11,22 +11,22 @@ Mục đích: Lưu lại kế hoạch triển khai chi tiết để tránh phả
 
 ---
 ## 1. Mục tiêu hoàn thành (Definition of Done)
-1. Endpoint `/api/suggest` trả về JSON hợp lệ (qua Zod) chứa layout + palette + sources + confidence.  
+1. Agent sinh JSON hợp lệ (qua Zod) chứa layout + palette + sources + confidence trực tiếp (không qua API).  
 2. ≥ 1 tài liệu domain được ingest và truy xuất (vector.search trả về chunk liên quan).  
-3. Suggestion được lưu vào Mongo và có thể GET lại.  
+3. Suggestion được lưu vào SQLite và có thể truy vấn lại.  
 4. Ingest script chạy thành công với log số chunk + thời gian.  
 5. Tests: tối thiểu 1 unit/test per tool chính + 1 workflow e2e (mock LLM) + 1 retry parse JSON.  
-6. Docker compose khởi chạy đủ: app + chroma + mongo (+ vllm/ollama).  
+6. Docker compose khởi chạy đủ: app + chroma + sqlite (+ vllm/ollama).  
 7. README + checklist cập nhật phản ánh trạng thái mới nhất.
 
 ---
 ## 2. Kiến trúc tóm tắt
 ```
-Client (deferred) -> Express API -> suggestionWorkflow
-                                 -> Tools (room.fetch, vector.search, layout.plan, palette.generate, suggestion.save)
-                                 -> Chroma (RAG) + Ollama (Embedding) + VLLM (LLM) + Mongo (Persistence)
+Client (deferred) -> Agentic RAG Engine (local)
+                 -> Tools (room.fetch, vector.search, layout.plan, palette.generate, suggestion.save)
+                 -> Chroma (RAG) + Ollama (Embedding) + VLLM (LLM) + SQLite (Persistence)
 ```
-Workflow chiến lược: validate → fetch room → formulate query → retrieve → layout plan → palette gen → aggregate + score → persist → return.
+Workflow chiến lược: validate → fetch room → formulate query → retrieve → layout plan → palette gen → aggregate + score → persist (SQLite) → return.
 
 ---
 ## 3. Danh sách hạng mục & Thứ tự thực thi
@@ -36,14 +36,14 @@ Workflow chiến lược: validate → fetch room → formulate query → retrie
 | 2 | Schemas | Zod: RoomInput, LayoutSuggestion, PaletteSuggestion, SuggestionOutput | Contract chuẩn |
 | 3 | Ingest Script | scripts/ingest-docs.ts chunk + embed + upsert | CLI ingest chạy được |
 | 4 | Chroma Adapter | Hàm upsert + search (k) + minScore filter | vector.search tool nền |
-| 5 | Tools Base | room.fetch mock, vector.search, suggestion.save (stub Mongo) | Tool callable |
+| 5 | Tools Base | room.fetch mock, vector.search, suggestion.save (stub SQLite) | Tool callable |
 | 6 | LLM Adapter | callModel() wrap VLLM streaming + retry | Abstraction thống nhất |
 | 7 | layout.plan Tool | Prompt JSON + Zod validate + 1 retry | LayoutSuggestion hợp lệ |
 | 8 | palette.generate Tool | Dựa style + retrieved chunks | PaletteSuggestion |
 | 9 | Workflow | suggestionWorkflow orchestrate + error path | Chạy end-to-end mock |
-|10 | Mongo Repos | rooms, suggestions CRUD | Persistence thật |
+|10 | SQLite Repos | rooms, suggestions CRUD | Persistence thật |
 |11 | Confidence Heuristic | Hàm score(layout, retrieval density, parse stability) | confidence field |
-|12 | API | POST /suggest, GET /suggestions/:id | Gọi workflow |
+|12 | (Bỏ API) | Agent gọi trực tiếp workflow, không endpoint HTTP | |
 |13 | Tests | Unit + e2e mock | Đảm bảo ổn định |
 |14 | Docker/Compose | Services + env example | Dev parity |
 |15 | Cleanup | Deprecate weather, docs update | Gọn nhẹ |
@@ -66,11 +66,11 @@ Validation rules:
 ## 5. Tools Chi tiết
 | Tool | Input | Output | Logic tóm tắt |
 |------|-------|--------|---------------|
-| room.fetch | room_id | RoomInput | Đọc Mongo (tạm mock JSON) |
+| room.fetch | room_id | RoomInput | Đọc SQLite (tạm mock JSON) |
 | vector.search | query,k | RetrievedChunk[] | Chroma query + filter score |
 | layout.plan | RoomInput + retrieved summary | LayoutSuggestion | Prompt ràng buộc ưu tiên ánh sáng, flow, privacy |
 | palette.generate | style_target?, retrieved[] | PaletteSuggestion | Trích phong cách + tone màu từ docs |
-| suggestion.save | SuggestionOutput + meta | {id} | Lưu Mongo + index |
+| suggestion.save | SuggestionOutput + meta | {id} | Lưu SQLite + index |
 
 Retry JSON: parse fail → sửa prompt (prepend “ONLY JSON”) → lần 2 → nếu vẫn fail ghi error với truncated raw.
 
@@ -107,13 +107,13 @@ Hard abort: >15s LLM call.
 | paletteGenerate_basic | Unit | Schema valid |
 | workflow_success | E2E (mock) | Full pipeline |
 | workflow_lowRetrieval | Edge | Branch fallback query |
-| suggestionSave_persist | Unit | Mongo insert |
+| suggestionSave_persist | Unit | SQLite insert |
 
 Mocking: LLM trả JSON có thể inject lỗi thiếu dấu ngoặc để test retry.
 
 ---
 ## 10. Docker Compose (Outline)
-Services: app, mongo, chroma, vllm, (ollama optional).  
+Services: app, sqlite, chroma, vllm, (ollama optional).  
 Mount: ./data/models -> vllm (model weights).  
 Networks: shared `rag-net`.
 
@@ -138,7 +138,8 @@ Buffer 2 ngày cuối cho fix & polish.
 2. Stub interiorAgent + đăng ký vào MastraApp (song song weather).  
 3. Tạo vector.search & room.fetch skeleton.  
 4. Viết ingest script (dry-run).  
-5. Commit + cập nhật checklist.
+5. Tích hợp SQLite cho persistence.  
+6. Commit + cập nhật checklist.
 
 ---
 ## 14. Follow-up (Post-MVP Backlog)

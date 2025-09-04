@@ -10,27 +10,26 @@ Mục tiêu chức năng cốt lõi phiên bản đầu: nhập mô tả phòng 
 - Lưu lịch sử yêu cầu & gợi ý để tham chiếu lại.
 
 ## 2. Kiến trúc (MVP)
-Sơ đồ: UI (deferred) → API (Express nhẹ) → Mastra Agent (LLM + Retriever + Vector DB) → JSON gợi ý.
+Sơ đồ: UI (deferred) → Mastra Agent (LLM + Retriever + Vector DB) → JSON gợi ý.
 ```
-[User Web UI]* <-> [Backend API (Express)] <-> [Mastra Agent]
-                                         |--> LLM (gpt-oss-20b - VLLM)
-                                         |--> Embedding (bge-m3 - Ollama)
-                                         |--> Vector DB (Chroma)
-                                         |--> MongoDB (users, rooms, suggestions)
+[User Web UI]* <-> [Mastra Agent]
+                 |--> LLM (gpt-oss-20b - VLLM)
+                 |--> Embedding (bge-m3 - Ollama)
+                 |--> Vector DB (Chroma)
+                 |--> Lưu dữ liệu trực tiếp ở local bằng SQLite
 ```
-(* UI sẽ bổ sung sau – hiện tập trung backend + agent.)
+(* UI sẽ bổ sung sau – hiện tập trung agent chạy local, không có API trung gian.)
 
 ## 3. Stack chính
 Mastra là framework agent duy nhất (không dùng LangChain/Streamlit trong MVP).
 | Thành phần | Công nghệ |
 |------------|-----------|
 | Frontend (Deferred) | Web client (Next.js dự kiến) |
-| Backend | Node.js (Express nhẹ) + TypeScript |
 | Agent Framework | Mastra (@mastra/core) |
 | LLM | gpt-oss-20b (Ollama) |
 | Embedding | bge-m3 (Ollama) |
 | Vector Store | Chroma (self-host) |
-| Database | MongoDB |
+| Database | SQLite (file .db local, không cần server) |
 | DevOps | Docker + GitHub Actions |
 
 ### 3.1 Core Mastra Components
@@ -53,6 +52,7 @@ Thứ tự đọc tài liệu khuyến nghị và lối tắt cho từng vai tr�
 |4|`docs/project_structure_mvp.md`|Cấu trúc thư mục & module|Setup / refactor|
 |5|`docs/mvp_development_plan.md`|Kế hoạch triển khai chi tiết (source-of-truth)|Kickoff / theo dõi tiến độ|
 |6|`docs/checklist_mvp.md`|Tiến độ & việc còn thiếu|Theo dõi / planning|
+|7|`docs/agent_persona.md`|Persona & hành vi agent|Định hướng prompt, kiểm thử, onboarding|
 |7|`docs/future_features.md`|Future / Deferred features (canonical)|Tham khảo khi lập kế hoạch mở rộng|
 
 Quick Paths:
@@ -63,26 +63,18 @@ Quick Paths:
 
 
 ## 4. Data Model (rút gọn)
-Nhìn tổng quát 3 collection chính để hiểu cấu trúc dữ liệu đi qua agent & API.
+design_suggestions: { _id, room_id, agent_version, recommendations { style[], color_palette[], materials[], layout[], decor[], rationales[] }, cost_estimate }
+Nhìn tổng quát 3 collection chính để hiểu cấu trúc dữ liệu đi qua agent.
 ```
 users: { _id, email, name, created_at, updated_at }
 rooms: { _id, user_id, type, dimensions, photos[], budget, style_target[], notes }
 design_suggestions: { _id, room_id, agent_version, recommendations { style[], color_palette[], materials[], layout[], decor[], rationales[] }, cost_estimate }
 ```
+*Dữ liệu được lưu trực tiếp ở local bằng SQLite, không qua API.*
 
-## 5. API (MVP)
-Các endpoint tối thiểu hỗ trợ tạo room và sinh gợi ý bất đồng bộ (poll kết quả). Không liệt kê toàn bộ chi tiết validation.
-| Method | Endpoint | Mô tả |
-|--------|----------|------|
-| POST | /rooms | Tạo room |
-| GET | /rooms/:id | Lấy thông tin room |
-| PATCH | /rooms/:id | Cập nhật room |
-| DELETE | /rooms/:id | Xoá room |
-| POST | /rooms/:id/photos | Upload/link ảnh (tạm: URL) |
-| POST | /rooms/:id/suggest | Tạo suggestion (async) |
-| GET | /suggestions/:id | Xem kết quả |
-
-Body tạo suggestion (ví dụ):
+## 5. Lưu trữ dữ liệu
+Toàn bộ dữ liệu phòng, gợi ý, lịch sử chat được lưu trực tiếp ở local bằng SQLite (file .db). Không sử dụng các endpoint API hay backend server.
+Ví dụ dữ liệu đầu vào cho agent:
 ```json
 {
   "goals": { "use": "phòng khách gia đình", "notes": "ưu tiên sáng ấm" },
@@ -92,13 +84,13 @@ Body tạo suggestion (ví dụ):
 ```
 
 ## 6. Luồng xử lý Suggestion
-Chuỗi bước nội bộ từ yêu cầu người dùng đến JSON gợi ý cuối cùng lưu DB.
-1. Người dùng gửi yêu cầu `/rooms/:id/suggest` → trả `202 + suggestion_id`.
-2. Worker/queue (hoặc tạm thời xử lý đồng bộ) lấy room + goals.
+Chuỗi bước nội bộ từ yêu cầu người dùng (qua chatbox) đến JSON gợi ý cuối cùng lưu local.
+1. Người dùng nhập mô tả phòng qua chatbox.
+2. Agent lấy thông tin phòng + goals từ input chat.
 3. Tạo context RAG (truy xuất tài liệu embedding từ Chroma theo từ khoá style / vật liệu).
 4. Gọi LLM sinh JSON (schema cố định).
 5. Ước tính chi phí đơn giản (mapping layout items → cost mẫu).
-6. Lưu vào `design_suggestions` → client poll lấy kết quả.
+6. Lưu vào bảng `design_suggestions` trong SQLite để tham chiếu lại.
 
 ## 7. Prompt dạng mẫu (rút gọn)
 Khung định hướng LLM giữ đúng schema, nêu giả định khi thiếu dữ liệu và tuân thủ ngân sách.
@@ -109,21 +101,20 @@ Output JSON với các trường: style[], color_palette[], materials[], layout[
 Không vượt quá ngân sách. Nếu thiếu dữ liệu → giả định an toàn và ghi rõ.
 ```
 
-## 8. Chạy dự án (hiện tại chỉ có ví dụ weather – sẽ thay bằng interior agent)
+## 8. Chạy dự án
 Điều kiện môi trường và lệnh cơ bản để khởi chạy môi trường dev demo hiện tại.
 ### 8.1 Điều kiện
 - Node.js ≥ 20
 - Đã cài `pnpm` / `npm`
 - Ollama đã pull model:  `bge-m3`
 - Chạy Chroma server (hoặc dùng embedded mode tạm)
-- MongoDB đang chạy (local hoặc container)
 
 ### 8.2 Cài đặt & chạy
 ```bash
 pnpm install
 pnpm dev
 ```
-Mastra dev sẽ khởi chạy môi trường agent hiện tại.
+Agent sẽ chạy trực tiếp ở local, lưu dữ liệu vào file hoặc bộ nhớ, không cần backend server/API.
 
 ## 9. Migration từ weather demo → interior agent
 Weather agent/workflow hiện diện để minh hoạ — được gắn nhãn deprecated.
@@ -142,8 +133,8 @@ Weather agent/workflow hiện diện để minh hoạ — được gắn nhãn d
 
 ## 10. Backlog (MVP → Next)
 Phân tầng công việc: những gì phải có cho MVP và nhóm mở rộng tiếp theo để lập kế hoạch sprint.
-MVP: auth cơ bản, CRUD room, suggest text, lưu lịch sử.
-Next: vision (ảnh), catalog, image generation, personalization.
+MVP: suggest text, lưu lịch sử phòng/gợi ý ở local.
+Next: vision (ảnh), catalog, image generation, personalization, tích hợp API nếu cần mở rộng.
 
 ## 11. Thư mục đề xuất tiếp theo
 Xem chi tiết cấu trúc trong `docs/project_structure_mvp.md` (đã chuyển sang Mastra + TypeScript).

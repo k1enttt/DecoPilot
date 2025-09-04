@@ -8,26 +8,26 @@
 
 **Goal**: Agent tư vấn thiết kế nội thất theo nhu cầu user và đặc điểm phòng/nhà, hỗ trợ phân tích text và sinh gợi ý bố trí, style, palette. Các mở rộng liên quan đến ảnh/hình minh họa và gợi ý sản phẩm được mô tả trong `docs/future_features.md`.
 
+
 **Stack (MVP)**
 - Frontend: (Chưa ưu tiên – sẽ bổ sung web client đơn giản sau)
-- Backend: Node.js (Express + TypeScript + Zod)
 - Agentic RAG: Mastra (framework chính; không dùng fallback LangChain trong MVP)
 - LLM: gpt-oss-20b (local qua VLLM)
 - Embedding: bge-m3 (Ollama)
 - Vector DB: Chroma (tự host)
-- Database: MongoDB (users, rooms, suggestions)
+- Database: SQLite (file .db local, users, rooms, suggestions)
 - DevOps: Docker + GitHub Actions (lint, test, build)
 
 
-**Kiến trúc hệ thống (MVP)**
 
+**Kiến trúc hệ thống (MVP)**
 ```
-[Frontend UI]  <->  [Backend API]  <->  [Agentic RAG Engine]
-                                         |--> [LLM Model: gpt-oss-20b local]
-                                         |--> [Embedding Model: bge-m3 từ Ollama]
-                                         |--> [Document Store / Vector DB: Chroma (tự host)]
-                                         |--> [Retriever] (tìm kiếm tài liệu liên quan từ Vector DB)
-                                         |--> [Database] (user, lịch sử chat)
+[Frontend UI]  <->  [Agentic RAG Engine]
+                 |--> [LLM Model: gpt-oss-20b local]
+                 |--> [Embedding Model: bge-m3 từ Ollama]
+                 |--> [Document Store / Vector DB: Chroma (tự host)]
+                 |--> [Retriever] (tìm kiếm tài liệu liên quan từ Vector DB)
+                 |--> Lưu dữ liệu trực tiếp ở local bằng SQLite (file .db)
 ```
 
 **Lưu ý:** Agent sử dụng RAG (Mastra orchestration) để truy xuất tài liệu chuyên ngành, LLM sinh câu trả lời có cấu trúc + dẫn nguồn. Không sử dụng fallback LangChain trong phạm vi MVP.
@@ -35,112 +35,65 @@
 **Mastra App Hiện Có:** `src/mastra/index.ts` (đang đăng ký `weatherAgent` & `weatherWorkflow` – deprecated, sẽ thay bằng `interiorAgent` & `suggestionWorkflow`).
 
 
-## 1) Data Model (MongoDB)
 
-> Tên DB: `ai_interior`
+## 1) Data Model (SQLite)
+
+> Tên DB file: `ai_interior.db`
 
 ### 1.1 users (MVP)
-```json
-{
-  "_id": "ObjectId",
-  "email": "string",
-  "name": "string",
-  "created_at": "Date",
-  "updated_at": "Date"
-}
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  name TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME
+);
 ```
 
-<!-- Bỏ collection projects trong MVP, dùng trực tiếp rooms gắn user_id -->
-
 ### 1.2 rooms (MVP)
-```json
-{
-  "_id": "ObjectId",
-  "user_id": "ObjectId",
-  "type": "living|bedroom|kitchen|bathroom|office|other",
-  "shape": "rectangle|square|l-shape|other",
-  "dimensions": {"length_m": 5.2, "width_m": 3.4, "height_m": 2.8},
-  "photos": [{"url": "string"}],
-  "budget": {"currency": "VND", "min": 10000000, "max": 50000000},
-  "style_target": ["minimal","scandinavian"],
-  "notes": "string",
-  "created_at": "Date",
-  "updated_at": "Date"
-}
+```sql
+CREATE TABLE rooms (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  type TEXT,
+  shape TEXT,
+  length_m REAL,
+  width_m REAL,
+  height_m REAL,
+  photos TEXT, -- JSON string
+  budget_currency TEXT,
+  budget_min INTEGER,
+  budget_max INTEGER,
+  style_target TEXT, -- JSON string
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME
+);
 ```
 
 ### 1.3 design_suggestions (MVP)
-```json
-{
-  "_id": "ObjectId",
-  "room_id": "ObjectId",
-  "agent_version": "string",
-  "recommendations": {
-    "style": ["minimal", "scandinavian"],
-    "color_palette": ["#F2F2F2","#1F2937","#8B5E3C"],
-    "materials": ["oak","linen","matte black"],
-    "layout": [
-      {"zone": "seating", "items": ["sofa 2.2m","armchair","coffee table ø70"], "position_hint": "east wall"}
-    ],
-  "decor": ["jute rug 160x230","2 wall frames 50x70"],
-    "rationales": ["narrow room → slim sofa","north-facing → warm tones"]
-  },
-  "cost_estimate": {"currency": "VND", "items": [{"label":"sofa","cost":8000000}]},
-  "created_at": "Date"
-}
+```sql
+CREATE TABLE design_suggestions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  room_id INTEGER,
+  agent_version TEXT,
+  recommendations TEXT, -- JSON string
+  cost_estimate TEXT, -- JSON string
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 <!-- Bỏ product_catalog trong MVP -->
 
 ---
 
-## 2) API Design (MVP)
 
-**Versioning**: `/api/v1`
-**Auth**: JWT (cookie/httpOnly) hoặc Bearer.
-**Validation**: Zod/Joi. **Errors**: RFC7807-like `{type,title,detail,instance}`.
+## 2) Data Access & Validation (MVP)
 
-### 2.1 Auth
-- `POST /auth/signup` {email,password,name}
-- `POST /auth/login` {email,password}
-- `POST /auth/logout`
-- `GET /auth/me` → user
-
-### 2.1 Rooms
-- `POST /rooms` {type, dimensions, style_target?, budget?}
-- `GET /rooms/:id`
-- `PATCH /rooms/:id`
-- `DELETE /rooms/:id`
-- `POST /rooms/:id/photos` (multipart)
-
-### 2.2 Suggestions
-- `POST /rooms/:id/suggest`
-  - Body: `{ goals, style_target?, budget? }`
-  - Trả về `{suggestion_id, status: "queued"}`
-- `GET /suggestions/:id`
-
-<!-- Bỏ Catalog trong MVP -->
-
-<!-- Bỏ Webhooks trong MVP -->
-
-**Example: POST /rooms/:id/suggest**
-```json
-{
-  "goals": {
-    "use": "living room for family + occasional WFH",
-    "style": ["japandi","minimal"],
-    "palette_prefer": ["warm neutral"],
-    "avoid": ["glossy surfaces"],
-    "special": ["cat-friendly"]
-  },
-  "budget": {"currency":"VND","max":35000000},
-  "constraints": {"rental": true},
-  "mode": "text"
-}
-```
-
-**Responses**
-- `202 Accepted` `{suggestion_id, status}` rồi client poll `GET /suggestions/:id`.
+- Không sử dụng API/endpoint HTTP. Toàn bộ thao tác CRUD với dữ liệu thực hiện trực tiếp qua SQLite (Node.js: better-sqlite3/sqlite3).
+- Auth, validation, error handling thực hiện trong agent hoặc UI nếu cần.
+- Dữ liệu phức tạp (mảng, object) lưu dưới dạng JSON string trong các trường tương ứng.
 
 ---
 
@@ -189,14 +142,15 @@ Tools:
 - `palette.generate(preferences)` → màu gợi ý
 - `suggestion.save(payload)` → DB id
 
+
 ### 3.2 Orchestration (Pseudo-sequence)
 ```
-User → API /suggest → Job Queue → Worker
-  1) Fetch room + goals
+User nhập thông tin phòng → Agent xử lý trực tiếp
+  1) Truy vấn room + goals từ SQLite
   2) Build context
   3) Gọi LLM sinh JSON (style, palette, layout, decor, rationales)
   4) Ước tính cost cơ bản
-  5) Lưu suggestion; trả id
+  5) Lưu suggestion vào SQLite; trả id
 ```
 
 ### 3.3 LLM Output JSON Schema (strict)
@@ -219,7 +173,8 @@ Script: `scripts/ingest-docs.ts`
 Steps: đọc file (pdf/md/txt) → chunk (max 800 tokens, overlap 80) → tính hash + token_count → embed (bge-m3) → upsert Chroma (collection ENV `CHROMA_COLLECTION`).
 Metadata tối thiểu: source, doc_type, chunk_index, token_count, hash, created_at (ISO); optional: style_tags[].
 
-## 3.6 Environment (Mastra & Backend)
+
+## 3.6 Environment (Mastra & Agent)
 | Variable | Mô tả |
 |----------|------|
 | MODEL_PROVIDER | ollama |
@@ -227,10 +182,9 @@ Metadata tối thiểu: source, doc_type, chunk_index, token_count, hash, create
 | EMBEDDING_MODEL_NAME | bge-m3 |
 | CHROMA_URL | URL Chroma |
 | CHROMA_COLLECTION | Tên collection |
-| MONGO_URI | Kết nối Mongo |
+| SQLITE_DB_PATH | Đường dẫn file SQLite |
 | MASTRA_LOG_LEVEL | info|debug |
 | MASTRA_ENV | dev|prod |
-| JWT_SECRET | Auth (tương lai) |
 
 ## 3.7 Evaluation (MVP)
 Metric: JSON schema validity (>=95%), latency job (<=30s text), token usage total, confidence distribution (monitor min/mean). Manual spot-check 5 suggestion/tuần.
@@ -339,7 +293,7 @@ paths:
 ## 11) Job Worker Pseudocode
 ```ts
 async function handleSuggestJob(job) {
-  const room = await db.rooms.findById(job.roomId);
+  const room = await db.query('SELECT * FROM rooms WHERE id = ?', [job.roomId]);
   const goals = job.payload.goals;
 
   let visionOut = null;
@@ -352,10 +306,10 @@ async function handleSuggestJob(job) {
 
   const products = await maybeSearchCatalog(llmJson.product_queries, job.payload.budget);
   const cost = estimateCost(products);
-  const doc = await db.suggestions.insert({ room_id: room._id, recommendations: { ...llmJson, product_refs: products.map(p=>p.sku) }, cost_estimate: cost });
+  const docId = await db.query('INSERT INTO design_suggestions (room_id, agent_version, recommendations, cost_estimate) VALUES (?, ?, ?, ?)', [room.id, agentVersion, JSON.stringify(llmJson), JSON.stringify(cost)]);
 
-  if (job.payload.render) triggerImageGen(doc._id, room.photos);
-  return doc._id;
+  if (job.payload.render) triggerImageGen(docId, room.photos);
+  return docId;
 }
 ```
 
@@ -381,8 +335,9 @@ Chi tiết các mục mở rộng (vision, catalog/pricing, image generation, pe
 
 ## 14) Environment Variables
 ```
+
 NODE_ENV=production
-MONGO_URI=mongodb+srv://...
+SQLITE_DB_PATH=./ai_interior.db
 S3_ENDPOINT=https://s3.local
 S3_BUCKET=ai-interior
 JWT_SECRET=...
