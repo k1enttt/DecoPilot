@@ -116,6 +116,21 @@ pnpm dev
 ```
 Agent sẽ chạy trực tiếp ở local, lưu dữ liệu vào file hoặc bộ nhớ, không cần backend server/API.
 
+### 8.3 Demo Flow
+Bạn có thể chạy demo end-to-end (generate + save) bằng lệnh sau:
+```bash
+pnpm demo
+```
+Trước khi chạy, hãy đảm bảo:
+- Đã cài đặt dependencies: `pnpm install`
+- Thiết lập biến môi trường trong `.env` (ví dụ `GENERATE_MODEL`, `CHROMA_URL` nếu cần)
+- Chuẩn bị SQLite file (sẽ tự động tạo nếu chưa có)
+
+Lệnh này sẽ:
+1. Gọi `interiorAgent.generate` với input mẫu.
+2. Hiển thị output JSON từ agent.
+3. Gọi `suggestionSaveTool.execute`, lưu vào SQLite và in ra ID kết quả.
+
 ## 9. Migration từ weather demo → interior agent
 Weather agent/workflow hiện diện để minh hoạ — được gắn nhãn deprecated.
 | Bước | Hành động |

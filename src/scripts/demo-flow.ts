@@ -1,7 +1,7 @@
 import "dotenv/config";
-import db from '../src/db/sqlite';
-import { interiorAgent } from '../src/mastra/agents/interior-agent';
-import { suggestionSaveTool } from '../src/mastra/tools/suggestion-save';
+import db from '../db/sqlite';
+import { interiorAgent } from '../mastra/agents/interior-agent';
+import { suggestionSaveTool } from '../mastra/tools/suggestion-save';
 import { RuntimeContext } from '@mastra/core/runtime-context';
 
 async function demoFlow() {
