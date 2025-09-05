@@ -53,10 +53,11 @@ Thứ tự đọc tài liệu khuyến nghị và lối tắt cho từng vai tr�
 |5|`docs/mvp_development_plan.md`|Kế hoạch triển khai chi tiết (source-of-truth)|Kickoff / theo dõi tiến độ|
 |6|`docs/checklist_mvp.md`|Tiến độ & việc còn thiếu|Theo dõi / planning|
 |7|`docs/agent_persona.md`|Persona & hành vi agent|Định hướng prompt, kiểm thử, onboarding|
-|7|`docs/future_features.md`|Future / Deferred features (canonical)|Tham khảo khi lập kế hoạch mở rộng|
+|8|`docs/future_features.md`|Future / Deferred features (canonical)|Tham khảo khi lập kế hoạch mở rộng|
+|9|`docs/agile_plan.md`|Agile sprint plan & backlog theo sprint|Theo dõi tiến độ và trạng thái nhiệm vụ|
 
 Quick Paths:
-- PM: 1 → 5
+- PM: 1 → 5 → 9
 - Backend Dev: 1 → 2 → 3 → (4) → 5
 - Contributor mới: 1 → 4 → 2 → 3 → 5
 - Chỉ cần biết input: 2
