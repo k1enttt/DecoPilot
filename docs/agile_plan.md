@@ -15,7 +15,7 @@ Mỗi sprint có checklist rõ ràng, dễ theo dõi và cập nhật trạng th
  - [x] Xây dựng agent nhận input text, sinh JSON suggestion (layout, style, palette, rationale)
  - [x] Tool: layout.plan, palette.generate (stub, trả về mẫu)
  - [x] Lưu suggestion vào SQLite (repo CRUD đơn giản)
- - [ ] Viết test đơn giản cho agent & tool
+ - [x] Viết test đơn giản cho agent & tool
 	- [x] Demo flow: nhập input -> nhận suggestion -> lưu DB
 
 ## Sprint 2: MVP cơ bản
