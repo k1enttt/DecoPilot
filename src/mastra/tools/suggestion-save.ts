@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
-import db from '../../db/sqlite';
+import fs from 'fs/promises';
+import path from 'path';
 import { SuggestionOutputSchema } from '../schemas/schemas';
 
 export const suggestionSaveTool = createTool({
@@ -9,8 +10,20 @@ export const suggestionSaveTool = createTool({
   inputSchema: SuggestionOutputSchema,
   outputSchema: z.object({ id: z.number() }),
   execute: async ({ context }) => {
-    // Stub: thực thi lưu vào DB
-    // db logic ở đây, hiện trả về id cố định
-    return { id: 1 };
+    const filePath = path.resolve(process.cwd(), 'design_suggestions.json');
+    // Đọc file tồn tại hoặc khởi tạo mảng trống
+    let suggestions: Array<{ id: number; suggestion: any }>;
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      suggestions = JSON.parse(content);
+    } catch (e: any) {
+      suggestions = [];
+    }
+    // Tính ID mới
+    const nextId = suggestions.length > 0 ? suggestions[suggestions.length - 1].id + 1 : 1;
+    suggestions.push({ id: nextId, suggestion: context });
+    // Ghi lại file
+    await fs.writeFile(filePath, JSON.stringify(suggestions, null, 2));
+    return { id: nextId };
   },
 });

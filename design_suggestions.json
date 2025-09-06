@@ -1,0 +1,153 @@
+[
+  {
+    "id": 1,
+    "suggestion": {
+      "style": [
+        "Minimalist",
+        "Modern"
+      ],
+      "color_palette": [
+        "#FFFFFF",
+        "#E0E0E0",
+        "#F5F5DC",
+        "#4A4A4A"
+      ],
+      "materials": [
+        "Laminate flooring",
+        "White wall paint",
+        "Glass desk surface",
+        "Steel frame chair",
+        "PVC blinds",
+        "Wooden shelving (recycled)",
+        "LED strip lighting",
+        "Minimalist desk lamp",
+        "Plant pot (ceramic)",
+        "Decorative wall art (abstract)"
+      ],
+      "layout": [
+        {
+          "name": "Desk",
+          "position": "Against the wall opposite the window",
+          "dimensions": "1.2m x 0.6m",
+          "orientation": "Facing the window for natural light"
+        },
+        {
+          "name": "Chair",
+          "position": "In front of the desk",
+          "orientation": "Aligned with desk"
+        },
+        {
+          "name": "Shelving",
+          "position": "Along the wall adjacent to the desk",
+          "dimensions": "0.8m x 1.5m",
+          "orientation": "Vertical"
+        },
+        {
+          "name": "Storage Box",
+          "position": "Under the desk",
+          "dimensions": "0.4m x 0.4m",
+          "orientation": "Horizontal"
+        },
+        {
+          "name": "Plant",
+          "position": "Near the window corner",
+          "orientation": "Facing the room"
+        }
+      ],
+      "decor": [
+        "Abstract wall art",
+        "Minimalist desk lamp",
+        "Ceramic plant pot",
+        "LED strip under desk"
+      ],
+      "rationales": [
+        "The minimalist style keeps the space uncluttered, ideal for a small office.",
+        "White and light gray walls maximize natural light from the East‑South window.",
+        "Laminate flooring is cost‑effective and easy to maintain.",
+        "Glass desk surface gives a sense of openness without breaking the budget.",
+        "Steel frame chair provides ergonomic support while staying within price limits.",
+        "PVC blinds allow light control and are inexpensive.",
+        "Recycled wood shelving adds texture and sustainability.",
+        "LED strip lighting reduces eye strain and enhances the modern look.",
+        "A single plant improves air quality and adds a subtle natural element.",
+        "Abstract wall art offers visual interest without clutter."
+      ],
+      "confidence": 0
+    }
+  },
+  {
+    "id": 2,
+    "suggestion": {
+      "style": [
+        "Minimalist",
+        "Modern"
+      ],
+      "color_palette": [
+        "#FFFFFF",
+        "#E0E0E0",
+        "#F5F5DC",
+        "#4A4A4A"
+      ],
+      "materials": [
+        "Laminate flooring",
+        "White wall paint",
+        "Glass desk surface",
+        "Steel frame chair",
+        "PVC blinds",
+        "Wooden shelving (recycled)",
+        "LED strip lighting",
+        "Minimalist desk lamp",
+        "Plant pot (ceramic)",
+        "Decorative wall art (abstract)"
+      ],
+      "layout": [
+        {
+          "name": "Desk",
+          "position": "Against the wall opposite the window",
+          "dimensions": "1.2m x 0.6m",
+          "orientation": "Facing the window for natural light"
+        },
+        {
+          "name": "Chair",
+          "position": "In front of the desk",
+          "orientation": "Aligned with desk"
+        },
+        {
+          "name": "Shelving",
+          "position": "Along the wall adjacent to the desk",
+          "dimensions": "0.8m x 1.5m",
+          "orientation": "Vertical"
+        },
+        {
+          "name": "Storage Box",
+          "position": "Under the desk",
+          "dimensions": "0.4m x 0.4m",
+          "orientation": "Horizontal"
+        },
+        {
+          "name": "Plant",
+          "position": "Near the window corner",
+          "orientation": "Facing the room"
+        }
+      ],
+      "decor": [
+        "Abstract wall art",
+        "Minimalist desk lamp",
+        "Ceramic plant pot",
+        "LED strip under desk"
+      ],
+      "rationales": [
+        "The minimalist style keeps the space uncluttered, ideal for a small office.",
+        "White and light gray walls maximize natural light from the East‑South window.",
+        "Laminate flooring is cost‑effective and easy to maintain.",
+        "Glass desk surface gives a sense of openness without breaking the budget.",
+        "Steel frame chair provides ergonomic support while staying within price limits.",
+        "PVC blinds allow light control and are inexpensive.",
+        "Recycled wood shelving adds texture and sustainability.",
+        "LED strip lighting reduces eye strain and enhances the modern look.",
+        "A single plant improves air quality and adds a subtle natural element.",
+        "Abstract wall art offers visual interest without clutter."
+      ]
+    }
+  }
+]

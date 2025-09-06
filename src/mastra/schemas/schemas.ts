@@ -41,5 +41,5 @@ export const SuggestionOutputSchema = z.object({
   decor: z.array(z.string()),
   rationales: z.array(z.string()),
   sources: z.array(z.string()).optional(),
-  confidence: z.number().min(0).max(1),
+  // confidence: z.number().min(0).max(1),
 });
