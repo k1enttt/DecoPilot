@@ -32,6 +32,7 @@ async function demoFlow() {
   const result = await suggestionSaveTool.execute({
     context: suggestionJson,
     runtimeContext: new RuntimeContext(),
+    tracingContext: { currentSpan: undefined }
   });
   console.log('=== Saved Suggestion ID ===');
   console.log(result.id);
